@@ -29,5 +29,6 @@ mas lab {
     workspace lab_monitoring_org {
         artifact weatherStation: tools.WeatherStation
         artifact converter: tools.Converter 
+        artifact iTrustCalculator: tools.ITrustCalculator
     }
 }

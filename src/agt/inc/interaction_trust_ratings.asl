@@ -11,7 +11,7 @@ interaction_trust(acting_agent, sensing_agent_9,  temperature(-2), -1).
 
 interaction_trust(acting_agent, sensing_agent_1,  temperature(10.8), 0.5).
 interaction_trust(acting_agent, sensing_agent_2,  temperature(10.8), 0.5).
-interaction_trust(acting_agent, sensing_agent_3,  temperature(10.8), 0.5).
+interaction_trust(acting_aagent, sensing_agent_3,  temperature(10.8), 0.5).
 interaction_trust(acting_agent, sensing_agent_4,  temperature(10.8), 0.5).
 interaction_trust(acting_agent, sensing_agent_5,  temperature(10.498727383236622), 0).
 interaction_trust(acting_agent, sensing_agent_6,  temperature(9.842154143537721), 0).

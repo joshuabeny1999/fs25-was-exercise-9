@@ -84,16 +84,31 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
     <-  .print("Witness Reputation Rating: (", WitnessAgent, ", ", SourceAgent, ", ", MessageContent, ", ", WRRating, ")");
     .
 
-/* 
- * Plan for reacting to the addition of the goal !select_reading(TempReadings, Celsius)
- * Triggering event: addition of goal !select_reading(TempReadings, Celsius)
- * Context: true (the plan is always applicable)
- * Body: unifies the variable Celsius with the 1st temperature reading from the list TempReadings
-*/
-@select_reading_task_0_plan
-+!select_reading(TempReadings, Celsius)
-    :  true
-    <-  .nth(0, TempReadings, Celsius);
+/*
+ * Plan for selecting the temperature reading based on highest average interaction trust
+ * Uses the pre-instantiated CArtAgO artifact `iTrustCalculator`
+ */
+@select_reading_by_trust_plan
++!select_reading(_Unused, Celsius)
+    : true
+    <- 
+    /* 1) collect just the (Source,TrustRating) pairs */
+    .findall(
+        structure(Source, Rate),
+        interaction_trust(acting_agent, Source,  _, Rate),
+        TrustList
+    );
+    /* 2) ask artifact who has the highest avg trust */
+    compute_best(TrustList, BestSource);
+
+    .print("Best sensor by avg trust is: ", BestSource);
+
+    /* 3) now pull the *actual* temperature belief from that source */
+    ?temperature(C)[source(BestSource)];
+    .print("Latest reading from ", BestSource, " is ", C);
+
+    /* 4) record and use it */
+    -+temperature(C).
     .
 
 /* 
@@ -104,12 +119,17 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
  * Body: converts the temperature from Celsius to binary degrees that are compatible with the 
  * movement of the robotic arm. Then, manifests the temperature with the robotic arm
 */
-@manifest_temperature_plan 
+@manifest_temperature_plan
 +!manifest_temperature
-    :  temperature(Celsius) & robot_td(Location)
-    <-  .print("I will manifest the temperature: ", Celsius);
-        convert(Celsius, -20.00, 20.00, 200.00, 830.00, Degrees)[artifact_id(ConverterId)]; // converts Celsius to binary degrees based on the input scale
-        .print("Temperature Manifesting (moving robotic arm to): ", Degrees);
+    : robot_td(Location)
+    <- .print("Selecting temperature by trust...");
+       // trigger our trust-based selection
+       !select_reading([], Celsius);
+       .print("I will manifest the temperature: ", Celsius);
+
+       // convert Celsius to binary degrees for the robotic arm
+       convert(Celsius, -20.00, 20.00, 200.00, 830.00, Degrees)[artifact_id(ConverterId)];
+       .print("Temperature Manifesting (moving robotic arm to): ", Degrees);
 
         /* 
          * If you want to test with the real robotic arm, 
