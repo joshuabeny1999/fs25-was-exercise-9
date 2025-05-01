@@ -89,7 +89,7 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
  * Uses the pre-instantiated CArtAgO artifact `iTrustCalculator`
  */
 @select_reading_by_trust_plan
-+!select_reading(_Unused, Celsius)
++!select_reading(Celsius)
     : true
     <- 
     /* 1) collect just the (Source,TrustRating) pairs */
@@ -108,7 +108,7 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
     .print("Latest reading from ", BestSource, " is ", C);
 
     /* 4) record and use it */
-    -+temperature(C).
+    Celsius = C;
     .
 
 /* 
@@ -124,7 +124,7 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
     : robot_td(Location)
     <- .print("Selecting temperature by trust...");
        // trigger our trust-based selection
-       !select_reading([], Celsius);
+       !select_reading(Celsius);
        .print("I will manifest the temperature: ", Celsius);
 
        // convert Celsius to binary degrees for the robotic arm

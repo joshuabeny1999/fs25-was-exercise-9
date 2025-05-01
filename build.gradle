@@ -18,11 +18,15 @@ repositories {
 }
 
 dependencies {
-    implementation('com.github.GiugAles:jacamo:SS2025')
-    implementation ('com.github.GiugAles:jacamo-hypermedia:SS2025-1')
+    implementation 'com.github.GiugAles:jacamo:SS2025'
+    implementation 'com.github.GiugAles:jacamo-hypermedia:SS2025-1'
     implementation 'com.google.code.gson:gson:2.9.1'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
     implementation 'org.apache.httpcomponents.client5:httpclient5-fluent:5.0'
+
+    // JUnit 5 for unit testing
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 }
 
 sourceSets {
@@ -38,22 +42,45 @@ sourceSets {
             srcDir 'src/resources'
         }
     }
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+        resources {
+            srcDir 'src/test/resources'
+        }
+    }
 }
 
-task task1_2 (type: JavaExec, dependsOn: 'classes') {
+task task1_2(type: JavaExec, dependsOn: 'classes') {
     description 'runs the application for task1_2'
-    group ' JaCaMo'
+    group 'JaCaMo'
     main = 'jacamo.infra.JaCaMoLauncher'
     args 'task1_2.jcm'
     classpath sourceSets.main.runtimeClasspath
 }
 
-task task3_4 (type: JavaExec, dependsOn: 'classes') {
+task task3_4(type: JavaExec, dependsOn: 'classes') {
     description 'runs the application for task3_4'
-    group ' JaCaMo'
+    group 'JaCaMo'
     main = 'jacamo.infra.JaCaMoLauncher'
     args 'task3_4.jcm'
     classpath sourceSets.main.runtimeClasspath
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        // which events to log
+        events "PASSED", "SKIPPED", "FAILED"
+        // show the standard out/err of the tests
+        showStandardStreams = true
+        // formatter settings
+        exceptionFormat "short"    // or "full"
+        showExceptions true
+        showCauses     true
+        showStackTraces true
+    }
 }
 
 clean {
