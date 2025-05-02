@@ -10,6 +10,12 @@
       .relevant_plans({ +!read_temperature }, _, L1); .remove_plan(L1);
       .relevant_plans({ -!read_temperature }, _, L2); .remove_plan(L2);
 
+       .add_plan({
+           +!read_temperature
+             :  true
+           <- .print("Rogue dummy read_temperature (to trigger commitment)");
+       });
+
       // collusion: whenever leader sends temperature, we relay it verbatim
       .add_plan({
         +temperature(Temp)[source(sensing_agent_9)]

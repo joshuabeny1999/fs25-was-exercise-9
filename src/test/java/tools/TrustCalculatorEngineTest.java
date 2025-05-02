@@ -6,66 +6,53 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TrustCalculatorEngineTest {
 
     @Test
-    void testPickBestSensor_simple() {
-        Object[] data = new Object[] {
-                "structure(sensorA,1.0)",
-                "structure(sensorB,2.0)",
-                "structure(sensorA,3.0)"
+    void testCombined_simple() {
+        Object[] its = new Object[] {
+                "interaction_trust_rating(a,1)", "interaction_trust_rating(b,0), interaction_trust_rating(a,1)"
         };
-        // sensorA avg = (1.0 + 3.0) / 2 = 2.0; sensorB avg = 2.0
-        // tie → first seen (sensorA) wins
-        assertEquals("sensorA",
-                TrustCalculatorEngine.pickBestSensor(data),
-                "Should pick sensorA on tie by insertion order");
+        Object[] crs = new Object[] {
+                "certified_reputation_rating(a,0)", "certified_reputation_rating(b,1)"
+        };
+        // a: IT_avg=(1+1)/2=1, CR_avg=0 => score=0.5; b: IT_avg=0, CR_avg=1 =>
+        // score=0.5;
+        // tie by insertion => a
+        assertEquals("a",
+                TrustCalculatorEngine.pickBestByCombined(its, crs));
     }
 
     @Test
-    void testPickBestSensor_clearWinner() {
-        Object[] data = new Object[] {
-                "structure(alpha,5)",
-                "structure(beta,2)",
-                "structure(alpha,3)",
-                "structure(beta,4)"
+    void testCombined_clearWinner() {
+        Object[] its = new Object[] {
+                "interaction_trust_rating(x,0)", "interaction_trust_rating(y,2)"
         };
-        // alpha avg = 4.0; beta avg = 3.0
-        assertEquals("alpha",
-                TrustCalculatorEngine.pickBestSensor(data),
-                "alpha has higher average than beta");
-    }
-
-    @Test
-    void testPickBestSensor_emptyInput() {
-        Object[] data = new Object[0];
-        assertNull(TrustCalculatorEngine.pickBestSensor(data),
-                "Empty input should return null");
-    }
-
-    @Test
-    void testPickBestSensor_ignoresMalformedStrings() {
-        Object[] data = new Object[] {
-                "structure(foo,1.5)",
-                "not_a_structure(garbage)",
-                123, // not even a String
-                "structure(bar,2.5)"
+        Object[] crs = new Object[] {
+                "certified_reputation_rating(x,1)", "certified_reputation_rating(y,1)"
         };
-        // only foo and bar count: foo avg=1.5, bar avg=2.5
-        assertEquals("bar",
-                TrustCalculatorEngine.pickBestSensor(data),
-                "Should ignore malformed entries and non-strings");
-    }
-
-    @Test
-    void testPickBestSensor_multipleReadingsPerSensor() {
-        Object[] data = new Object[] {
-                "structure(x,1)",
-                "structure(x,2)",
-                "structure(x,3)",
-                "structure(y,4)",
-                "structure(y,6)"
-        };
-        // x avg = 2.0; y avg = 5.0
+        // x: (0+1)/2=0.5; y: (2+1)/2=1.5
         assertEquals("y",
-                TrustCalculatorEngine.pickBestSensor(data),
-                "y should win with higher average");
+                TrustCalculatorEngine.pickBestByCombined(its, crs));
     }
+
+    @Test
+    void testCombined_missingCR() {
+        Object[] its = new Object[] {
+                "interaction_trust_rating(a,1)"
+        };
+        Object[] crs = new Object[] { /* no certified_reputation_rating(a,...) */ };
+        assertNull(
+                TrustCalculatorEngine.pickBestByCombined(its, crs));
+    }
+
+    @Test
+    void testCombined_ignoreBadFormats() {
+        Object[] its = new Object[] {
+                "interaction_trust_rating(p,1)", "badformat"
+        };
+        Object[] crs = new Object[] {
+                "certified_reputation_rating(p,1)", 1234
+        };
+        assertEquals("p",
+                TrustCalculatorEngine.pickBestByCombined(its, crs));
+    }
+
 }

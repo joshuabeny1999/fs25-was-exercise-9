@@ -12,8 +12,8 @@ public class ITrustCalculator extends Artifact {
      *            RawRatingsArray: Object[] of Strings like "structure(agent,rate)"
      */
     @OPERATION
-    void compute_best(Object[] rawRatings, OpFeedbackParam<Term> bestSource) {
-        String winner = TrustCalculatorEngine.pickBestSensor(rawRatings);
+    void compute_best_cr(Object[] rawItRatings, Object[] rawCrRatings, OpFeedbackParam<Term> bestSource) {
+        String winner = TrustCalculatorEngine.pickBestByCombined(rawItRatings, rawCrRatings);
         if (winner != null) {
             bestSource.set(ASSyntax.createAtom(winner));
         }

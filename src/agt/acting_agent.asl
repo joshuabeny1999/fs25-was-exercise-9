@@ -88,29 +88,51 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
  * Plan for selecting the temperature reading based on highest average interaction trust
  * Uses the pre-instantiated CArtAgO artifact `iTrustCalculator`
  */
-@select_reading_by_trust_plan
+@select_by_combined_plan
 +!select_reading(Celsius)
     : true
     <- 
-    /* 1) collect just the (Source,TrustRating) pairs */
+    // collect interaction-trust ratings
     .findall(
-        structure(Source, Rate),
-        interaction_trust(acting_agent, Source,  _, Rate),
-        TrustList
+      interaction_trust_rating(Source, Rate),
+      interaction_trust(acting_agent, Source, _, Rate),
+      ItList
     );
-    /* 2) ask artifact who has the highest avg trust */
-    compute_best(TrustList, BestSource);
+    // collect certified reputation ratings
+    .findall(
+      certified_reputation_rating(Source, CR),
+      certified_reputation(CertAg, Source, _, CR),
+      CrList
+    );
+    .print("ITList: ", ItList, "  CRList: ", CrList);
 
-    .print("Best sensor by avg trust is: ", BestSource);
+    // compute best by IT+CR
+    compute_best_cr(ItList, CrList, BestSource);
+    .print("Chosen by combined trust: ", BestSource);
 
-    /* 3) now pull the *actual* temperature belief from that source */
-    ?temperature(C)[source(BestSource)];
-    .print("Latest reading from ", BestSource, " is ", C);
-
-    /* 4) record and use it */
+    // fetch its most recent temperature
+    ?temperature(C)[ source(BestSource) ];
     Celsius = C;
-    .
+.
 
+@request_certified_plan
++!request_certified
+    : true
+    <- .print("Asking readers for their certified reputations…");
+       /* 1) gather who committed */
+       .findall(
+         Source,
+         commitment(Source, temperature_reading_mission, monitoring_scheme),
+         Committers
+       );
+       .print("   Committers: ", Committers);
+
+       for (.member(A, Committers)) {
+           .print("  → asking ", A);
+            .send(A, askOne, certified_reputation(certification_agent, A, temperature(_), CR), CRReply, 1000);
+            -+CRReply;
+        };
+.
 /* 
  * Plan for reacting to the addition of the goal !manifest_temperature
  * Triggering event: addition of goal !manifest_temperature
@@ -124,6 +146,9 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
     : robot_td(Location)
     <- .print("Selecting temperature by trust...");
        // trigger our trust-based selection
+       !request_certified;
+       .wait(2000);
+
        !select_reading(Celsius);
        .print("I will manifest the temperature: ", Celsius);
 
