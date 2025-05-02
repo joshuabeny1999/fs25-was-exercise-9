@@ -22,6 +22,7 @@
           : true
         <- .print("Forward Rouge Leader Temp: ", Temp);
            .broadcast(tell, temperature(Temp));
+           -+my_temp(Temp);
       });
   .
 

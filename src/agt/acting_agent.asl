@@ -101,14 +101,26 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
     // collect certified reputation ratings
     .findall(
       certified_reputation_rating(Source, CR),
-      certified_reputation(CertAg, Source, _, CR),
+      certified_reputation(certification_agent, Source, _, CR),
       CrList
     );
-    .print("ITList: ", ItList, "  CRList: ", CrList);
+    // collect withness reputation ratings
+    .findall(
+      witness_reputation_rating(Source, CR),
+      witness_reputation(WitAg, Source, _, CR),
+      WitList
+    );
+    .print("ITList: ", ItList, "  CRList: ", CrList, "  WitList: ", WitList);
 
     // compute best by IT+CR
-    compute_best_cr(ItList, CrList, BestSource);
+    compute_best_it_cr_wr(ItList, CrList, WitList, BestSource);
     .print("Chosen by combined trust: ", BestSource);
+
+    // For reference show also old compution winners
+    compute_best_it(ItList, BestSourceIT);
+    .print("I would have chosen by IT: ", BestSourceIT);
+    compute_best_it_cr(ItList, CrList, BestSourceITCR);
+    .print("I would have chosen by IT+CR: ", BestSourceITCR);
 
     // fetch its most recent temperature
     ?temperature(C)[ source(BestSource) ];

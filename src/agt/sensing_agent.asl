@@ -23,7 +23,10 @@ i_have_plans_for(R) :- not (role_goal(R,G) & not has_plan_for(G)).
 @start_plan
 +!start
     :  true
-    <-  .print("Hello world");
+    <-
+    .my_name(Me);
+     -+me(Me);
+    .print("Hello world");
     .
 
 /* 
@@ -39,8 +42,48 @@ i_have_plans_for(R) :- not (role_goal(R,G) & not has_plan_for(G)).
         readCurrentTemperature(47.42, 9.37, Celsius); // reads the current temperature using the artifact
         .print("Read temperature (Celsius): ", Celsius);
         .broadcast(tell, temperature(Celsius)); // broadcasts the temperature reading
+        -+my_temp(Celsius); // updates the agent's belief about its temperature
     .
 
+@catchup_after_own_reading
++my_temp(My)
+  :  me(Me)
+<-
+   /* collect _all_ prior broadcasts as a list of structure(Source,Temp) */
+   .findall(
+     structure(Src,Temp),
+     ( temperature(Temp)[source(Src)] & Src \== Me ),
+     Pairs
+   );
+   /* now unpack each structure/2 and replay the rating goal */
+   for (.member(Struct, Pairs)) {
+     Struct = structure(S,OtherTemp);
+     !rate_witness(S,OtherTemp);
+   }.
+
+/* 2) for any new incoming reading, if I already know my temp, go straight to rating */
++temperature(Other)[source(S)]
+  :  me(Me) & my_temp(My) & S \== Me
+<-
+   !rate_witness(S,Other).
+
+/* 3) rate close readings +1 */
+@witness_rate_close
++!rate_witness(S,Other)
+  :  me(Me) & my_temp(My) & ( math.abs(Other-My) <= 1.0 )
+<-
+   .print("Witness‐rating ", S, " → +1");
+   .send(acting_agent, tell,
+         witness_reputation(Me, S, temperature(Other), 1) ).
+
+/* 4) rate far readings –1 */
+@witness_rate_far
++!rate_witness(S,Other)
+  :  me(Me) & my_temp(My) & ( math.bs(Other-My) > 1.0 )
+<-
+   .print("Witness‐rating ", S, " → -1");
+   .send(acting_agent, tell,
+         witness_reputation(Me, S, temperature(Other), -1) ).
 /* 
  * Plan for reacting to the addition of the belief organization_deployed(OrgName)
  * Triggering event: addition of belief organization_deployed(OrgName)

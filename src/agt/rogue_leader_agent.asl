@@ -25,6 +25,7 @@
                     <-  .print("Reading the temperature");
                         .print("Read temperature (Celsius): ", -2);
                         .broadcast(tell, temperature(-2));
+                        -+my_temp(-2);
             }
         );
     .
